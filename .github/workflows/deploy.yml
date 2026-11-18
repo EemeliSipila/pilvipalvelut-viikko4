@@ -1,0 +1,62 @@
+name: Julkaise GitHub Pagesiin
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Nouda lähdekoodi
+        uses: actions/checkout@v4
+      - name: Asenna Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Asenna riippuvuudet
+        run: npm install
+      - name: Tarkista Firebase-asetukset
+        env:
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_MESSAGING_ID: ${{ vars.VITE_FIREBASE_MESSAGING_ID }}
+          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+        run: |
+          for name in VITE_FIREBASE_API_KEY VITE_FIREBASE_AUTH_DOMAIN VITE_FIREBASE_PROJECT_ID VITE_FIREBASE_MESSAGING_ID VITE_FIREBASE_APP_ID; do
+            if [ -z "${!name}" ]; then
+              echo "GitHub Actions -muuttuja puuttuu: $name"
+              exit 1
+            fi
+          done
+      - name: Rakenna tuotantoversio
+        env:
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_MESSAGING_ID: ${{ vars.VITE_FIREBASE_MESSAGING_ID }}
+          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+        run: npm run build
+      - name: Valmistele Pages
+        uses: actions/configure-pages@v5
+      - name: Pakkaa sivusto
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Julkaise
+        id: deployment
+        uses: actions/deploy-pages@v4
