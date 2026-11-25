@@ -26,9 +26,9 @@ jobs:
       - name: Asenna Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
       - name: Asenna riippuvuudet
-        run: npm install
+        run: npm ci
       - name: Tarkista Firebase-asetukset
         env:
           VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
@@ -52,11 +52,11 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
         run: npm run build
       - name: Valmistele Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Pakkaa sivusto
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: dist
       - name: Julkaise
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
